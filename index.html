@@ -43,7 +43,7 @@ async function load(){
 }
 function finishAuth(){clearInterval(authWatch);clearTimeout(authTimeout);authWatch=null;authTimeout=null;authNonce='';if(authPopup&&!authPopup.closed)authPopup.close();authPopup=null;$('connect').disabled=!authOrigin;}
 async function initAuth(){
- try{const res=await fetch('admin-config.json',{cache:'no-store'});if(!res.ok)throw Error();const config=await res.json();const url=new URL(config.authOrigin);if(url.protocol!=='https:'||url.username||url.password||url.pathname!=='/'||url.search||url.hash)throw Error();authOrigin=url.origin;$('connect').disabled=false;}
+ try{const res=await fetch('admin-config.json?v=20261103-github',{cache:'no-store'});if(!res.ok)throw Error();const config=await res.json();const url=new URL(config.authOrigin);if(url.protocol!=='https:'||url.username||url.password||url.pathname!=='/'||url.search||url.hash)throw Error();authOrigin=url.origin;$('connect').disabled=false;}
  catch{status('El acceso con GitHub todavía no está configurado.',true);}
 }
 $('connect').onclick=()=>{
