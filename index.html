@@ -33,14 +33,27 @@ button,.button{display:inline-block;border:0;border-radius:10px;padding:15px 22p
     <p class="hint">Para añadir: elige los archivos en GitHub y pulsa «Commit changes». Para eliminar: pulsa «Eliminar» bajo la imagen y confirma el cambio en GitHub.</p>
   </section>
 </main>
-<div id="stage" hidden><img id="slide" alt="Imagen de la presentación"><button id="exit">Salir de la presentación</button></div>
+<div id="stage" hidden><img id="slide" alt="Imagen de la presentación"><p id="slide-status" role="status" style="position:absolute;left:24px;right:24px;bottom:24px;text-align:center;color:white;background:#111;padding:12px" hidden></p><button id="exit">Salir de la presentación</button></div>
 <script>
 'use strict';
 // ES5 and XMLHttpRequest keep older LG webOS browsers supported.
 function $(id){return document.getElementById(id);}
 var endpoint='https://api.github.com/repos/TVRESFER/tvresfer.github.io/contents/imagenes?ref=main';
 var repository='https://github.com/TVRESFER/tvresfer.github.io';
-var images=[],position=0,timer=null,running=false,failed=0,loading=false;
+var images=[],position=0,timer=null,running=false,failed=0,loading=false,slideCancel=null,startTimeout=null;
+function loadImage(img,file,ready,fail){
+  var attempt=0,timeout=null,cancelled=false;
+  var urls=[file.url,'https://raw.githubusercontent.com/TVRESFER/tvresfer.github.io/main/imagenes/'+encodeURIComponent(file.name)];
+  function cancel(){cancelled=true;clearTimeout(timeout);img.onload=null;img.onerror=null;}
+  function next(){
+    if(cancelled)return;clearTimeout(timeout);
+    if(attempt>=urls.length){cancel();if(fail)fail();return;}
+    img.onload=function(){if(cancelled)return;cancel();if(ready)ready();};
+    img.onerror=next;
+    timeout=setTimeout(next,15000);img.src=urls[attempt++];
+  }
+  next();return cancel;
+}
 function setStatus(text,error){
   $('message').textContent=text;$('message').className=error?'error':'';
   $('playback-status').textContent=text;$('playback-status').className=error?'error':'';
@@ -50,7 +63,8 @@ function renderGallery(){
   while(gallery.firstChild)gallery.removeChild(gallery.firstChild);
   for(var i=0;i<images.length;i++){
     var file=images[i],card=document.createElement('article');card.className='card';
-    var img=new Image();img.src=file.url;img.alt=file.name;img.setAttribute('loading','lazy');
+    var img=new Image();img.alt=file.name;
+    loadImage(img,file,null,null);
     var name=document.createElement('p');name.className='name';name.textContent=file.name;
     var remove=document.createElement('a');remove.className='button remove';remove.textContent='Eliminar';
     remove.href=repository+'/delete/main/imagenes/'+encodeURIComponent(file.name);
@@ -97,28 +111,37 @@ function load(){
   });
 }
 function schedule(){clearTimeout(timer);if(running)timer=setTimeout(function(){show(position+1);},Math.max(1,Math.min(3600,Number($('seconds').value)||8))*1000);}
-function show(index){if(!running||!images.length)return;position=(index+images.length)%images.length;$('slide').src=images[position].url;$('slide').alt=images[position].name;schedule();}
+function show(index){
+  if(!running||!images.length)return;
+  clearTimeout(timer);if(slideCancel)slideCancel();
+  position=(index+images.length)%images.length;
+  $('slide-status').textContent='Cargando: '+images[position].name+'…';$('slide-status').hidden=false;
+  $('slide').alt=images[position].name;
+  slideCancel=loadImage($('slide'),images[position],function(){
+    if(!running)return;clearTimeout(startTimeout);failed=0;$('slide-status').hidden=true;schedule();
+  },function(){
+    if(!running)return;
+    if(++failed>=images.length){stop();setStatus('La pantalla no ha podido cargar las imágenes por ninguna de las dos rutas. Comprueba la conexión o las restricciones de la red.',true);}
+    else show(position+1);
+  });
+}
 function ignoreRejection(result){if(result&&typeof result['catch']==='function')result['catch'](function(){});}
 function fullscreenElement(){return document.fullscreenElement||document.webkitFullscreenElement||document.webkitCurrentFullScreenElement;}
 function stop(){
-  running=false;clearTimeout(timer);$('stage').hidden=true;$('stage').style.display='none';$('slide').removeAttribute('src');
+  running=false;clearTimeout(timer);clearTimeout(startTimeout);if(slideCancel)slideCancel();slideCancel=null;$('stage').hidden=true;$('stage').style.display='none';$('slide').removeAttribute('src');
   var exit=document.exitFullscreen||document.webkitExitFullscreen||document.webkitCancelFullScreen;
   if(fullscreenElement()&&exit){try{ignoreRejection(exit.call(document));}catch(error){}}
   $('start').focus();
 }
 $('start').onclick=function(){
-  if(!images.length)return;running=true;failed=0;$('stage').hidden=false;$('stage').style.display='block';show(0);
+  if(!images.length)return;running=true;failed=0;$('stage').hidden=false;$('stage').style.display='block';
+  startTimeout=setTimeout(function(){if(running){stop();setStatus('La pantalla no consigue abrir las imágenes. Comprueba la conexión o las restricciones de la red y pulsa Actualizar.',true);}},45000);
+  show(0);
   var stage=$('stage'),enter=stage.requestFullscreen||stage.webkitRequestFullscreen||stage.webkitRequestFullScreen;
   if(enter){try{ignoreRejection(enter.call(stage));}catch(error){}}
   $('exit').focus();
 };
 $('exit').onclick=stop;$('refresh').onclick=load;
-$('slide').onload=function(){failed=0;};
-$('slide').onerror=function(){
-  if(!running)return;
-  if(++failed>=images.length){stop();setStatus('No se pudo mostrar ninguna imagen. Revisa los archivos o la conexión.',true);}
-  else show(position+1);
-};
 function onFullscreenChange(){if(!fullscreenElement()&&running)stop();}
 document.addEventListener('fullscreenchange',onFullscreenChange);
 document.addEventListener('webkitfullscreenchange',onFullscreenChange);
