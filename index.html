@@ -6,10 +6,10 @@
 <title>TV RESFER · Presentación</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f5f6f8;color:#19232f;font:16px system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:0 28px}[hidden]{display:none!important}
-button,.button{display:inline-block;border:0;border-radius:10px;padding:15px 22px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;text-align:center;background:#aa151b;color:white}button:disabled{opacity:.45;cursor:default}a{color:#215fe5}a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #f29e27;outline-offset:4px}
-#home{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.brand{font-size:clamp(64px,16vw,168px);font-weight:900;letter-spacing:-.055em;line-height:1.1;margin:0 0 48px;background:linear-gradient(to bottom,#aa151b 0%,#aa151b 25%,#f1bf00 25%,#f1bf00 75%,#aa151b 75%,#aa151b 100%);background-clip:text;-webkit-background-clip:text;color:transparent}#home label{margin-bottom:24px;color:#53606e}#seconds{width:88px;margin-left:10px;padding:9px;border:1px solid #cbd3dd;border-radius:7px;font:inherit;text-align:center;background:white}#start{padding:16px 28px}
+button,.button{display:inline-block;border:0;border-radius:10px;padding:15px 22px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;text-align:center;background:#aa151b;color:white}button:disabled{opacity:.45;cursor:default}a{color:#215fe5}a:focus,button:focus,input:focus{outline:3px solid #f29e27;outline-offset:4px}
+#home{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.brand{font-size:100px;font-size:clamp(64px,16vw,168px);font-weight:900;letter-spacing:-.055em;line-height:1.1;margin:0 0 48px;background:linear-gradient(to bottom,#aa151b 0%,#aa151b 25%,#f1bf00 25%,#f1bf00 75%,#aa151b 75%,#aa151b 100%);background-clip:text;-webkit-background-clip:text;color:transparent}#home label{margin-bottom:24px;color:#53606e}#seconds{width:88px;margin-left:10px;padding:9px;border:1px solid #cbd3dd;border-radius:7px;font:inherit;text-align:center;background:white}#start{padding:16px 28px}#playback-status{max-width:600px;min-height:24px;line-height:1.5;color:#53606e;margin:18px 0 0}#playback-status.error{color:#aa151b}
 #administrar{padding:56px 0 72px;border-top:1px solid #dce1e7;scroll-margin-top:24px}h2{font-size:28px;letter-spacing:-.035em;margin:0 0 12px}.help{color:#5a6674;line-height:1.6;margin:0 0 24px;max-width:720px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.quiet{background:#e8ecf1;color:#33445a;padding:12px 18px}#message{min-height:26px;margin:20px 0;color:#53606e;line-height:1.5}#message.error{color:#aa151b}#gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px;margin-top:24px}.card{background:white;border:1px solid #dce1e7;border-radius:12px;padding:14px;min-width:0}.card img{display:block;width:100%;height:160px;object-fit:contain;background:#eef0f3;border-radius:6px}.name{font-size:13px;color:#5a6674;overflow-wrap:anywhere;line-height:1.5;margin:12px 0}.remove{width:100%;padding:10px;background:#fff0f0;color:#aa151b;font-size:14px}.hint{font-size:14px;color:#66717e;line-height:1.6;margin:24px 0 0}
-#stage{position:fixed;inset:0;background:#000;z-index:10}#slide{width:100%;height:100%;object-fit:contain}#exit{position:absolute;right:20px;top:20px;background:#222b;color:white;opacity:0;transition:opacity .2s}#stage:hover #exit,#exit:focus-visible{opacity:1}@media(max-width:600px){main{padding:0 22px}.brand{margin-bottom:36px}#administrar{padding-top:36px}#gallery{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.card{padding:10px}.card img{height:120px}h2{font-size:25px}}@media(prefers-reduced-motion:reduce){#exit{transition:none}}
+#stage{position:fixed;top:0;right:0;bottom:0;left:0;background:#000;z-index:10}#slide{width:100%;height:100%;object-fit:contain}#exit{position:absolute;right:20px;top:20px;background:#222b;color:white;opacity:0;transition:opacity .2s}#stage:hover #exit,#exit:focus{opacity:1}@media(max-width:600px){main{padding:0 22px}.brand{margin-bottom:36px}#administrar{padding-top:36px}#gallery{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.card{padding:10px}.card img{height:120px}h2{font-size:25px}}@media(prefers-reduced-motion:reduce){#exit{transition:none}}
 </style>
 </head>
 <body>
@@ -18,6 +18,8 @@ button,.button{display:inline-block;border:0;border-radius:10px;padding:15px 22p
     <h1 class="brand">RESFER</h1>
     <label for="seconds">Segundos por imagen <input id="seconds" type="number" min="1" max="3600" value="8"></label>
     <button id="start" disabled>▶ Iniciar presentación</button>
+    <p id="playback-status" role="status" aria-live="polite">Cargando imágenes…</p>
+    <noscript>Activa JavaScript en el navegador para iniciar la presentación.</noscript>
   </section>
   <section id="administrar" aria-labelledby="admin-title">
     <h2 id="admin-title">Gestionar imágenes</h2>
@@ -34,45 +36,99 @@ button,.button{display:inline-block;border:0;border-radius:10px;padding:15px 22p
 <div id="stage" hidden><img id="slide" alt="Imagen de la presentación"><button id="exit">Salir de la presentación</button></div>
 <script>
 'use strict';
-const $=id=>document.getElementById(id);
-const endpoint='https://api.github.com/repos/TVRESFER/tvresfer.github.io/contents/imagenes?ref=main';
-const repository='https://github.com/TVRESFER/tvresfer.github.io';
-let images=[],position=0,timer=null,running=false,failed=0,loading=false;
+// ES5 and XMLHttpRequest keep older LG webOS browsers supported.
+function $(id){return document.getElementById(id);}
+var endpoint='https://api.github.com/repos/TVRESFER/tvresfer.github.io/contents/imagenes?ref=main';
+var repository='https://github.com/TVRESFER/tvresfer.github.io';
+var images=[],position=0,timer=null,running=false,failed=0,loading=false;
+function setStatus(text,error){
+  $('message').textContent=text;$('message').className=error?'error':'';
+  $('playback-status').textContent=text;$('playback-status').className=error?'error':'';
+}
 function renderGallery(){
-  $('gallery').replaceChildren(...images.map(file=>{
-    const card=document.createElement('article');card.className='card';
-    const img=new Image();img.src=file.url;img.alt=file.name;img.loading='lazy';
-    const name=document.createElement('p');name.className='name';name.textContent=file.name;
-    const remove=document.createElement('a');remove.className='button remove';remove.textContent='Eliminar';
+  var gallery=$('gallery');
+  while(gallery.firstChild)gallery.removeChild(gallery.firstChild);
+  for(var i=0;i<images.length;i++){
+    var file=images[i],card=document.createElement('article');card.className='card';
+    var img=new Image();img.src=file.url;img.alt=file.name;img.setAttribute('loading','lazy');
+    var name=document.createElement('p');name.className='name';name.textContent=file.name;
+    var remove=document.createElement('a');remove.className='button remove';remove.textContent='Eliminar';
     remove.href=repository+'/delete/main/imagenes/'+encodeURIComponent(file.name);
     remove.target='_blank';remove.rel='noopener noreferrer';
     remove.setAttribute('aria-label','Eliminar '+file.name+' en GitHub');
-    card.append(img,name,remove);return card;
-  }));
+    card.appendChild(img);card.appendChild(name);card.appendChild(remove);gallery.appendChild(card);
+  }
 }
-async function load(){
-  if(loading)return;loading=true;$('refresh').disabled=true;
-  $('message').textContent='Cargando imágenes…';$('message').className='';
-  try{
-    const res=await fetch(endpoint,{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
-    if(!res.ok)throw Error('No se pudieron cargar las imágenes. Comprueba la conexión y pulsa Actualizar en unos minutos.');
-    const files=await res.json();if(!Array.isArray(files))throw Error('No se pudo leer la carpeta de imágenes.');
-    images=files.filter(f=>f.type==='file'&&/\.(jpe?g|png|webp|gif|avif)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,'es',{numeric:true})).map(f=>({name:f.name,url:f.download_url}));
-    renderGallery();$('start').disabled=!images.length;
-    $('message').textContent=images.length?`${images.length} ${images.length===1?'imagen lista':'imágenes listas'} para reproducir.`:'Todavía no hay imágenes. Pulsa Añadir imágenes para empezar.';
-  }catch(error){$('message').textContent=error.message;$('message').className='error';}
-  finally{loading=false;$('refresh').disabled=false;}
+function requestJSON(url,done){
+  var xhr=new XMLHttpRequest(),finished=false;
+  function finish(error,value){if(finished)return;finished=true;done(error,value);}
+  xhr.open('GET',url+(url.indexOf('?')<0?'?':'&')+'v='+new Date().getTime(),true);
+  xhr.timeout=20000;
+  xhr.onload=function(){
+    if(xhr.status<200||xhr.status>=300){finish(true);return;}
+    try{var files=JSON.parse(xhr.responseText);if(!Array.isArray(files)){finish(true);return;}finish(false,files);}catch(error){finish(true);}
+  };
+  xhr.onerror=xhr.ontimeout=xhr.onabort=function(){finish(true);};
+  try{xhr.send();}catch(error){finish(true);}
 }
-function schedule(){clearTimeout(timer);if(running)timer=setTimeout(()=>show(position+1),Math.max(1,Math.min(3600,Number($('seconds').value)||8))*1000);}
+function load(){
+  if(loading||running)return;loading=true;$('refresh').disabled=true;
+  setStatus('Cargando imágenes…',false);
+  function complete(error,files){
+    loading=false;$('refresh').disabled=false;
+    if(error){setStatus('No se pudieron cargar las imágenes. Comprueba la conexión y pulsa Actualizar.',true);return;}
+    var next=[];
+    for(var i=0;i<files.length;i++){
+      var file=files[i];
+      if(file.type==='file'&&/\.(jpe?g|png|webp|gif|avif)$/i.test(file.name)){
+        // Serve images on this same domain, avoiding raw.githubusercontent.com.
+        next.push({name:file.name,url:'imagenes/'+encodeURIComponent(file.name)});
+      }
+    }
+    next.sort(function(a,b){return a.name.localeCompare(b.name);});images=next;
+    $('start').disabled=!images.length;
+    setStatus(images.length?images.length+' '+(images.length===1?'imagen lista':'imágenes listas')+' para reproducir.':'Todavía no hay imágenes. Pulsa Añadir imágenes para empezar.',false);
+    try{renderGallery();}catch(error){$('message').textContent='La galería no se pudo mostrar. Puedes iniciar la presentación.';}
+  }
+  // GitHub Pages generates this list whenever images are added or removed.
+  requestJSON('imagenes.json',function(error,files){
+    if(!error){complete(false,files);return;}
+    requestJSON(endpoint,complete);
+  });
+}
+function schedule(){clearTimeout(timer);if(running)timer=setTimeout(function(){show(position+1);},Math.max(1,Math.min(3600,Number($('seconds').value)||8))*1000);}
 function show(index){if(!running||!images.length)return;position=(index+images.length)%images.length;$('slide').src=images[position].url;$('slide').alt=images[position].name;schedule();}
-async function stop(){running=false;clearTimeout(timer);$('stage').hidden=true;$('slide').removeAttribute('src');if(document.fullscreenElement)await document.exitFullscreen().catch(()=>{});$('start').focus();}
-$('start').onclick=()=>{if(!images.length)return;running=true;failed=0;$('stage').hidden=false;show(0);$('stage').requestFullscreen?.().catch(()=>{});$('exit').focus();};
-$('exit').onclick=stop;
-$('refresh').onclick=load;
-$('slide').onload=()=>{failed=0;};
-$('slide').onerror=()=>{if(!running)return;if(++failed>=images.length){stop();$('message').textContent='No se pudo mostrar ninguna imagen. Revisa los archivos o la conexión.';$('message').className='error';}else show(position+1);};
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&running)stop();});
-document.addEventListener('keydown',e=>{if(!running)return;if(e.key==='Escape')stop();if(e.key==='ArrowRight'){e.preventDefault();show(position+1);}if(e.key==='ArrowLeft'){e.preventDefault();show(position-1);}});
+function ignoreRejection(result){if(result&&typeof result['catch']==='function')result['catch'](function(){});}
+function fullscreenElement(){return document.fullscreenElement||document.webkitFullscreenElement||document.webkitCurrentFullScreenElement;}
+function stop(){
+  running=false;clearTimeout(timer);$('stage').hidden=true;$('stage').style.display='none';$('slide').removeAttribute('src');
+  var exit=document.exitFullscreen||document.webkitExitFullscreen||document.webkitCancelFullScreen;
+  if(fullscreenElement()&&exit){try{ignoreRejection(exit.call(document));}catch(error){}}
+  $('start').focus();
+}
+$('start').onclick=function(){
+  if(!images.length)return;running=true;failed=0;$('stage').hidden=false;$('stage').style.display='block';show(0);
+  var stage=$('stage'),enter=stage.requestFullscreen||stage.webkitRequestFullscreen||stage.webkitRequestFullScreen;
+  if(enter){try{ignoreRejection(enter.call(stage));}catch(error){}}
+  $('exit').focus();
+};
+$('exit').onclick=stop;$('refresh').onclick=load;
+$('slide').onload=function(){failed=0;};
+$('slide').onerror=function(){
+  if(!running)return;
+  if(++failed>=images.length){stop();setStatus('No se pudo mostrar ninguna imagen. Revisa los archivos o la conexión.',true);}
+  else show(position+1);
+};
+function onFullscreenChange(){if(!fullscreenElement()&&running)stop();}
+document.addEventListener('fullscreenchange',onFullscreenChange);
+document.addEventListener('webkitfullscreenchange',onFullscreenChange);
+document.addEventListener('keydown',function(e){
+  if(!running)return;
+  var key=e.key,code=e.keyCode;
+  if(key==='Escape'||code===27||code===461){e.preventDefault();stop();}
+  if(key==='ArrowRight'||code===39){e.preventDefault();show(position+1);}
+  if(key==='ArrowLeft'||code===37){e.preventDefault();show(position-1);}
+});
 if(location.hash==='#admin'||location.hash==='#administracion')location.hash='administrar';
 load();
 </script>

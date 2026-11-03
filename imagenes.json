@@ -1,0 +1,14 @@
+---
+layout: null
+---
+[
+{% assign first_image = true %}
+{% for file in site.static_files %}
+{% assign folder = file.path | slice: 0, 10 %}
+{% if folder == '/imagenes/' %}
+{% unless first_image %},{% endunless %}
+{"type":"file","name":{{ file.name | jsonify }}}
+{% assign first_image = false %}
+{% endif %}
+{% endfor %}
+]
