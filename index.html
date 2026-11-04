@@ -23,7 +23,7 @@ button,.button{display:inline-block;border:0;border-radius:10px;padding:15px 22p
   </section>
   <section id="administrar" aria-labelledby="admin-title">
     <h2 id="admin-title">Gestionar imágenes</h2>
-    <p class="help">Los cambios se confirman en GitHub con tu cuenta autorizada. Después vuelve aquí y pulsa «Actualizar».</p>
+    <p class="help">Los cambios se confirman en GitHub con tu cuenta autorizada. La presentación comprueba los cambios cada minuto y se actualiza sola cuando GitHub termina de publicarlos.</p>
     <div class="toolbar">
       <a id="add" class="button" href="https://github.com/TVRESFER/tvresfer.github.io/upload/main/imagenes" target="_blank" rel="noopener noreferrer">＋ Añadir imágenes</a>
       <button id="refresh" class="quiet">Actualizar</button>
@@ -40,7 +40,7 @@ button,.button{display:inline-block;border:0;border-radius:10px;padding:15px 22p
 function $(id){return document.getElementById(id);}
 var endpoint='https://api.github.com/repos/TVRESFER/tvresfer.github.io/contents/imagenes?ref=main';
 var repository='https://github.com/TVRESFER/tvresfer.github.io';
-var images=[],position=0,timer=null,running=false,failed=0,loading=false,slideCancel=null,startTimeout=null;
+var images=[],position=0,timer=null,running=false,failed=0,loading=false,slideCancel=null,startTimeout=null,pollTimer=null,galleryDirty=false;
 function loadImage(img,file,ready,fail){
   var attempt=0,timeout=null,cancelled=false;
   var urls=[file.url,'https://raw.githubusercontent.com/TVRESFER/tvresfer.github.io/main/imagenes/'+encodeURIComponent(file.name)];
@@ -85,12 +85,14 @@ function requestJSON(url,done){
   xhr.onerror=xhr.ontimeout=xhr.onabort=function(){finish(true);};
   try{xhr.send();}catch(error){finish(true);}
 }
-function load(){
-  if(loading||running)return;loading=true;$('refresh').disabled=true;
-  setStatus('Cargando imágenes…',false);
+function load(quiet){
+  if(loading)return;loading=true;$('refresh').disabled=true;
+  if(!quiet)setStatus('Cargando imágenes…',false);
   function complete(error,files){
     loading=false;$('refresh').disabled=false;
-    if(error){setStatus('No se pudieron cargar las imágenes. Comprueba la conexión y pulsa Actualizar.',true);return;}
+    clearTimeout(pollTimer);pollTimer=setTimeout(function(){load(true);},60000);
+    // A temporary Wi-Fi failure must not interrupt the current loop.
+    if(error){if(!quiet)setStatus('No se pudieron cargar las imágenes. Comprueba la conexión y pulsa Actualizar.',true);return;}
     var next=[];
     for(var i=0;i<files.length;i++){
       var file=files[i];
@@ -99,10 +101,26 @@ function load(){
         next.push({name:file.name,url:'imagenes/'+encodeURIComponent(file.name)});
       }
     }
-    next.sort(function(a,b){return a.name.localeCompare(b.name);});images=next;
+    next.sort(function(a,b){return a.name.localeCompare(b.name);});
+    var changed=next.length!==images.length,current=images[position],oldPosition=position,found=-1;
+    for(var j=0;j<next.length;j++){
+      if(!images[j]||next[j].name!==images[j].name)changed=true;
+      if(current&&next[j].name===current.name)found=j;
+    }
+    images=next;
+    if(changed){
+      galleryDirty=true;
+      if(running){
+        if(!images.length){
+          clearTimeout(timer);clearTimeout(startTimeout);if(slideCancel)slideCancel();slideCancel=null;
+          $('slide').removeAttribute('src');$('slide-status').textContent='No hay imágenes. Esperando nuevas imágenes…';$('slide-status').hidden=false;
+        }else if(found>=0){position=found;}
+        else{failed=0;show(oldPosition%images.length);}
+      }
+    }
     $('start').disabled=!images.length;
     setStatus(images.length?images.length+' '+(images.length===1?'imagen lista':'imágenes listas')+' para reproducir.':'Todavía no hay imágenes. Pulsa Añadir imágenes para empezar.',false);
-    try{renderGallery();}catch(error){$('message').textContent='La galería no se pudo mostrar. Puedes iniciar la presentación.';}
+    if(!running&&galleryDirty){try{renderGallery();galleryDirty=false;}catch(error){$('message').textContent='La galería no se pudo mostrar. Puedes iniciar la presentación.';}}
   }
   // GitHub Pages generates this list whenever images are added or removed.
   requestJSON('imagenes.json',function(error,files){
@@ -132,6 +150,7 @@ function stop(){
   var exit=document.exitFullscreen||document.webkitExitFullscreen||document.webkitCancelFullScreen;
   if(fullscreenElement()&&exit){try{ignoreRejection(exit.call(document));}catch(error){}}
   $('start').focus();
+  if(galleryDirty){try{renderGallery();galleryDirty=false;}catch(error){}}
 }
 $('start').onclick=function(){
   if(!images.length)return;running=true;failed=0;$('stage').hidden=false;$('stage').style.display='block';
@@ -141,7 +160,7 @@ $('start').onclick=function(){
   if(enter){try{ignoreRejection(enter.call(stage));}catch(error){}}
   $('exit').focus();
 };
-$('exit').onclick=stop;$('refresh').onclick=load;
+$('exit').onclick=stop;$('refresh').onclick=function(){load(false);};
 function onFullscreenChange(){if(!fullscreenElement()&&running)stop();}
 document.addEventListener('fullscreenchange',onFullscreenChange);
 document.addEventListener('webkitfullscreenchange',onFullscreenChange);
